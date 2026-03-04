@@ -1,6 +1,6 @@
-openai-agents
-pydantic
-fastapi
-uvicorn
+openai-agents>=0.10.0
+pydantic>=2.10
+fastapi>=0.115,<0.117
+uvicorn>=0.30
 python-dotenv
 python-multipart

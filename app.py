@@ -1,6 +1,8 @@
 from dotenv import load_dotenv
 import os
+import sys
 import uuid
+from pathlib import Path
 from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, JSONResponse
@@ -11,23 +13,29 @@ from agent import main_agent
 # Load environment variables
 load_dotenv()
 openrouter_api_key = os.getenv("OPENROUTER_API_KEY")
-if not openrouter_api_key:
-    raise ValueError("OPENROUTER_API_KEY not found in .env file")
 
-# Configure OpenAI client with OpenRouter
-set_tracing_disabled(True)
-set_default_openai_api("chat_completions")
-external_client = AsyncOpenAI(
-    api_key=openrouter_api_key,
-    base_url="https://openrouter.ai/api/v1"
-)
-set_default_openai_client(external_client)
+# Configure OpenAI client with OpenRouter (only if key is available)
+if openrouter_api_key:
+    set_tracing_disabled(True)
+    set_default_openai_api("chat_completions")
+    external_client = AsyncOpenAI(
+        api_key=openrouter_api_key,
+        base_url="https://openrouter.ai/api/v1"
+    )
+    set_default_openai_client(external_client)
+else:
+    print("WARNING: OPENROUTER_API_KEY not found. Chat functionality will not work.", file=sys.stderr)
 
 # Create FastAPI app
 app = FastAPI(title="Health Wellness Agent")
 
+# Determine the base directory (handles Vercel's file structure)
+BASE_DIR = Path(__file__).resolve().parent
+static_dir = BASE_DIR / "static"
+
 # Mount static files
-app.mount("/static", StaticFiles(directory="static"), name="static")
+if static_dir.exists():
+    app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
 
 # In-memory session storage
 sessions = {}
@@ -46,13 +54,17 @@ def get_or_create_session(session_id: str):
 @app.get("/")
 async def serve_index():
     """Serve the chat UI."""
-    return FileResponse("static/index.html")
+    index_path = BASE_DIR / "static" / "index.html"
+    return FileResponse(str(index_path))
 
 
 @app.post("/api/chat")
 async def chat(request: Request):
     """Handle chat messages from the frontend."""
     try:
+        if not openrouter_api_key:
+            return JSONResponse({"error": "OPENROUTER_API_KEY not configured. Please add it to your Vercel environment variables."}, status_code=500)
+
         body = await request.json()
         user_message = body.get("message", "").strip()
         session_id = body.get("session_id", str(uuid.uuid4()))
@@ -116,6 +128,9 @@ async def reset_session(request: Request):
         del sessions[session_id]
     return JSONResponse({"status": "reset", "session_id": session_id})
 
+
+# Vercel handler - this is what Vercel's @vercel/python uses
+handler = app
 
 if __name__ == "__main__":
     import uvicorn

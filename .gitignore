@@ -12,6 +12,9 @@ wheels/
 # Environment variables (API keys!)
 .env
 
+# Lock file (Vercel should use requirements.txt)
+uv.lock
+
 # IDE / Editor
 .claude/
 .vscode/

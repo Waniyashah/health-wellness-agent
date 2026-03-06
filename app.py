@@ -134,8 +134,7 @@ async def reset_session(request: Request):
     return JSONResponse({"status": "reset", "session_id": session_id})
 
 
-# Vercel handler - this is what Vercel's @vercel/python uses
-handler = app
+# Vercel will automatically find the `app` variable which is our FastAPI instance
 
 if __name__ == "__main__":
     import uvicorn

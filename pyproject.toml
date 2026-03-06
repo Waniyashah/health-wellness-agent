@@ -3,7 +3,7 @@ name = "health-wellness-agent2"
 version = "0.1.0"
 description = "Health and Wellness AI Agent with FastAPI"
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 dependencies = [
     "openai-agents>=0.10.0",
     "pydantic>=2.10",

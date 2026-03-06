@@ -55,7 +55,12 @@ def get_or_create_session(session_id: str):
 async def serve_index():
     """Serve the chat UI."""
     index_path = BASE_DIR / "static" / "index.html"
-    return FileResponse(str(index_path))
+    if index_path.exists():
+        return FileResponse(str(index_path))
+    else:
+        # Vercel extracts static files from the Lambda bundle, so we can redirect to the static Edge URL
+        from fastapi.responses import RedirectResponse
+        return RedirectResponse(url="/static/index.html")
 
 
 @app.post("/api/chat")

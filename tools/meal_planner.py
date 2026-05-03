@@ -2,11 +2,17 @@ from agents import function_tool, RunContextWrapper
 from guaidrails import validate_dietary_input, validate_meal_plan_output
 from context import UserSessionContext
 import asyncio
-from duckduckgo_search import DDGS
 import warnings
 import random
 
-warnings.filterwarnings("ignore", module="duckduckgo_search")
+try:
+    from duckduckgo_search import DDGS
+    HAS_DDGS = True
+    warnings.filterwarnings("ignore", module="duckduckgo_search")
+except Exception as e:
+    HAS_DDGS = False
+    print("Warning: Failed to import duckduckgo_search. Internet search will be disabled. Error:", e)
+
 
 REAL_MEALS = {
     'vegetarian': ["Avocado Toast with Egg", "Quinoa Salad", "Vegetable Stir-fry", "Lentil Soup", "Paneer Tikka", "Mushroom Risotto", "Greek Salad", "Caprese Sandwich", "Stuffed Bell Peppers", "Eggplant Parmesan"],
@@ -36,6 +42,8 @@ async def meal_planner(ctx: RunContextWrapper[UserSessionContext], diet_preferen
         # Search the internet for best meals matching the diet preference
         # Run synchronous web search in a thread to not block event loop
         def search():
+            if not HAS_DDGS:
+                return []
             with DDGS() as ddgs:
                 results = ddgs.text(f"best {diet_preferences} healthy meals recipes", max_results=10)
                 if results:

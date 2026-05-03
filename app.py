@@ -107,6 +107,8 @@ async def chat(request: Request):
             context_info["meal_plan"] = context.meal_plan
         if context.workout_plan:
             context_info["workout_plan"] = context.workout_plan
+        if context.relaxation_plan:
+            context_info["relaxation_plan"] = context.relaxation_plan
         if context.progress_logs:
             context_info["progress_logs"] = context.progress_logs
         if context.checkin_schedule:

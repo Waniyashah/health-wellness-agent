@@ -1,35 +1,43 @@
 from agents import function_tool, RunContextWrapper
-from guaidrails import validate_goal_input, validate_goal_output
+from guaidrails import validate_goal_output
 from context import UserSessionContext
-import re
+
+from typing import Optional
 
 @function_tool
-def goal_analyzer(ctx: RunContextWrapper[UserSessionContext], input_data: str) -> dict:
-    """Analyzes user's fitness goal and extracts structured information.
+def goal_analyzer(
+    ctx: RunContextWrapper[UserSessionContext], 
+    goal_description: str,
+    action: str = "", 
+    quantity: str = "", 
+    metric: str = "", 
+    duration: str = ""
+) -> dict:
+    """Analyzes user's fitness and wellness goal from their natural language input.
 
     Args:
-        input_data: The user's goal statement (e.g., 'lose 5kg in 2 months').
+        goal_description: The full natural language description of the user's goal (e.g. 'I want to lose 5 kg in 1 month').
+        action: Extracted action (e.g., 'lose', 'gain', 'maintain', 'improve') if applicable.
+        quantity: Extracted numerical value as a string (e.g., '5') if applicable.
+        metric: Extracted unit of measurement (e.g., 'kg', 'lbs', 'level') if applicable.
+        duration: Extracted timeframe for the goal (e.g., '2 months', '1 week', 'ongoing') if applicable.
 
     Returns:
         A dictionary with the structured goal.
     """
-    if not validate_goal_input(input_data):
-        raise ValueError("Invalid goal format. Use: '[lose/gain] [number] [kg/lbs] in [number] [months/weeks]'")
-
-    # Use regex to extract goal components
-    pattern = r"(lose|gain)\s+(\d+\.?\d*)\s*(kg|lbs|pounds)\s*(?:in)?\s*(\d+)\s*(months|weeks)"
-    match = re.search(pattern, input_data.lower())
-
-    if not match:
-        raise ValueError("Could not parse goal from input")
-
-    action, quantity, metric, duration_num, duration_unit = match.groups()
+    parsed_quantity = None
+    if quantity:
+        try:
+            parsed_quantity = float(quantity)
+        except ValueError:
+            pass
 
     goal = {
-        "action": action,
-        "quantity": float(quantity),
-        "metric": metric,
-        "duration": f"{duration_num} {duration_unit}"
+        "goal_description": goal_description,
+        "action": action if action else None,
+        "quantity": parsed_quantity,
+        "metric": metric if metric else None,
+        "duration": duration if duration else None
     }
     ctx.context.goal = goal
     return validate_goal_output(goal).dict()

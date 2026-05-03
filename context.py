@@ -8,6 +8,7 @@ class UserSessionContext(BaseModel):
     diet_preferences: Optional[str] = None
     workout_plan: Optional[Dict] = None
     meal_plan: Optional[List[str]] = None
+    relaxation_plan: Optional[List[str]] = None
     checkin_schedule: Optional[List[str]] = None
     injury_notes: Optional[str] = None
     handoff_logs: List[str] = []

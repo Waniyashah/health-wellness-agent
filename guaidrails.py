@@ -1,11 +1,11 @@
 from pydantic import BaseModel, ValidationError
 from typing import Optional, List, Dict
-import re
 
 class Goal(BaseModel):
-    action: str
-    quantity: float
-    metric: str
+    goal_description: str
+    action: Optional[str] = None
+    quantity: Optional[float] = None
+    metric: Optional[str] = None
     duration: Optional[str] = None
 
 class MealPlan(BaseModel):
@@ -20,10 +20,12 @@ class Schedule(BaseModel):
 class ProgressUpdate(BaseModel):
     update: Dict[str, str | int | None]
 
+class RelaxationPlan(BaseModel):
+    techniques: List[str]
+
 def validate_goal_input(input_str: str) -> bool:
-    # More flexible pattern that allows extra text before/after
-    pattern = r"(lose|gain)\s+(\d+\.?\d*)\s*(kg|lbs|pounds)\s*(in)?\s*(\d+\s*(months|weeks))"
-    return bool(re.search(pattern, input_str.lower()))
+    # Allow any non-empty string so LLM can understand natural language
+    return bool(input_str.strip())
 
 def validate_goal_output(data: dict) -> Goal:
     try:
@@ -32,8 +34,8 @@ def validate_goal_output(data: dict) -> Goal:
         raise ValueError(f"Invalid goal output format: {e}")
 
 def validate_dietary_input(input_str: str) -> bool:
-    valid_diets = ["vegetarian", "vegan", "keto", "gluten-free", "diabetic"]
-    return input_str.lower() in valid_diets
+    # Allow any non-empty string to support diverse diets in human language
+    return bool(input_str.strip())
 
 def validate_meal_plan_output(data: dict) -> MealPlan:
     try:
@@ -58,3 +60,9 @@ def validate_progress_update_output(data: dict) -> ProgressUpdate:
         return ProgressUpdate(**data)
     except ValidationError as e:
         raise ValueError(f"Invalid progress update output format: {e}")
+
+def validate_relaxation_plan_output(data: dict) -> RelaxationPlan:
+    try:
+        return RelaxationPlan(**data)
+    except ValidationError as e:
+        raise ValueError(f"Invalid relaxation plan output format: {e}")
